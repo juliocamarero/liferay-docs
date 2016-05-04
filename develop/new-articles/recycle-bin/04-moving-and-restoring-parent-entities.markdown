@@ -95,6 +95,9 @@ code:
 
 This method updates the entry's status, adds a trash version for it, turns 
 off the visibility of its asset, and reindexes it for search purposes.
+Note that the method checks if the song was already in the recycle bin since the
+song could have been sent by itself to the recycle bin before. In this case, we
+won't do anything in particular with this song.
 
 Here's how the method implements this for the song entity: 
 

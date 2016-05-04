@@ -13,14 +13,14 @@ Walk through the following steps to implement the Undo functionality:
 
 1. Add the Undo Tag
 2. Call the Action for Restoration
-3. Display the `liferay-ui:trash-undo` Tag
+3. Display the `liferay-trash:undo` Tag
 
 Go ahead and implement the Undo button and its related links!
 
 ## Step 1: Add the Undo Tag [](id=step-1-add-the-undo-tag)
 
-First, you must use the `liferay-ui:trash-undo` tag in your JSP. Then you need
-to set a portlet action URL and pass it to the `liferay-ui:trash-undo` tag.
+First, you must use the `liferay-trash:undo` tag in your JSP. Then you need
+to set a portlet action URL and pass it to the `liferay-trash:undo` tag.
 This maps the tag's *Undo* button to the portlet action that you'll implement in
 the next step. 
 
@@ -29,15 +29,16 @@ song in the Jukebox portlet:
 
     <portlet:actionURL name="restoreSong" var="undoTrashURL" />
 
-    <liferay-ui:trash-undo portletURL="<%= undoTrashURL %>" />
+    <liferay-trash:undo portletURL="<%= undoTrashURL %>" />
 
 Now that you've added the tag and action URL, go ahead and implement the 
 portlet action to restore the entry.
 
 ## Step 2: Create a Portlet Action to Initiate Restoration [](id=step-2-create-a-portlet-action-to-initiate-restoration)
 
-You must create a portlet action method that invokes your service method to
-restore the entry. 
+You must create a portlet action method that invokes your service method to undo
+the "move to the recycle bin" action, which is actually the restore action we
+already created. 
 
 For example, the following portlet action method from the [JukeboxPortlet](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/portlet/JukeboxPortlet.java)
 class restores songs from the Recycle Bin:
@@ -54,7 +55,7 @@ class restores songs from the Recycle Bin:
     }
 
 This method implements the `restoreSong` action that was named in the
-`view.jsp`. The action URL maps the `liferay-ui:trash-undo` tag to this method.
+`view.jsp`. The action URL maps the `liferay-trash:undo` tag to this method.
 
 Note how it parses entry IDs from the request object. It restores all of these
 entries by calling the `restore*` service method. 
@@ -65,7 +66,7 @@ restore? You'll learn how to pass this data to the session next.
 ## Step 3: Providing Trash Entry Data for the Taglib [](id=step-3-providing-trash-entry-data-for-the-taglib)
 
 The final step for implementing the Undo button is to provide the trashed
-entry's information to the `liferay-ui:trash-undo` tag. In order for the
+entry's information to the `liferay-trash:undo` tag. In order for the
 tag to display properly, you must provide some information for the session
 messages. The session needs to know which entries were just deleted. Then the
 restore method can use that information to restore the entries. 
@@ -93,6 +94,16 @@ deleted:
             SessionMessages.KEY_SUFFIX_HIDE_DEFAULT_SUCCESS_MESSAGE);
     }
 
+
+In the data object there should be at least:
+- An array of with the primary key(s) or your entity(s) moved to the recycle 
+bin. The name of this object must end in "Id" (SongIds, ArticleIds, ... etc)
+- cmd. The action executed (it could be "remove" or "move")
+- deleteEntryClassName. An array with the class name(s) of the entity(s) 
+deleted. This is used to generate a more detailed success message. 
+- deleteEntryTitle. An array with the title(s) of the entity(s) deleted. This is
+ used to generate a more detailed success message. 
+
 It gathers the elements needed to distinguish the entry instances to restore.
 For the Jukebox song elements, the song's class name, title, and IDs are
 included.
@@ -109,6 +120,10 @@ portlet when it refreshes.
 
     SessionMessages.add(request, PortalUtil.getPortletId(request) +
         SessionMessages.KEY_SUFFIX_DELETE_SUCCESS_DATA, data);
+
+This Session message will prevent the default success message (Your request
+processsed succesfully) to appear since we are now showing a more elaborate
+sucess message.
 
     SessionMessages.add(request, PortalUtil.getPortletId(request) +
         SessionMessages.KEY_SUFFIX_HIDE_DEFAULT_SUCCESS_MESSAGE);

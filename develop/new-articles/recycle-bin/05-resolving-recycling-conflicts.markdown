@@ -36,8 +36,11 @@ Since both entities are in the same place, a naming conflict could occur. Some
 applications only allow one entity to have a particular property value; for
 example, names for documents, titles for songs in an album, friendly URLs for
 pages, etc. On moving an entity to the Recycle Bin, you must rename properties
-that could generate conflicts. For example Liferay's Jukebox Portlet
-uses a `UnicodeProperties` instance to store a mapping of each song's title:
+that could generate conflicts. When you move an entity to the recycle bien and
+you create a TrashEntry you can create an object of type UnicodeProperties 
+(similar to a Map) that you can use to store information that you will need on
+restore. (For example Liferay's Jukebox Portlet
+uses the `UnicodeProperties` object to store a mapping of each song's title:
 
     UnicodeProperties typeSettingsProperties = new UnicodeProperties();
 
@@ -49,7 +52,7 @@ uses a `UnicodeProperties` instance to store a mapping of each song's title:
 
     song.setName(TrashUtil.getTrashTitle(trashEntry.getEntryId()));
 
-The mapping is stored with the trash entry. 
+The mapping object is stored with the trash entry. 
 `TrashUtil.getTrashTitle(trashEntry.getEntryId())` is invoked from [`SongLocalServiceImpl`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/service/impl/SongLocalServiceImpl.java)'s
 `moveSongToTrash` method to set the name of the original entity. In this case, a
 song is renamed to a unique value that can be used to look up the trash entry
@@ -102,7 +105,11 @@ uses the following method:
 
 If the song isn't in the Recycle Bin, the song's current name is returned.
 Otherwise, the method invokes `TrashUtil.getOriginalTitle(_song.getName())` to
-return the song's original name. 
+return the song's original name.
+ 
+If you need to rename more than one field, you can do so using the 
+getOriginalTitle (String value, String nameOfYourField) as many times as you
+need. 
 
 Next, you need to finish satisfying the interface contract, and completely
 implement the Conflicts Resolution functionality.
@@ -124,9 +131,9 @@ identically named song is already present.
 
 Two methods need to be implemented in the trash handler to allow for the 
 necessary checks and updates. The first method must check for duplicate trash 
-entries. If an entry with the same name is detected in a directory, it must
-throw an exception. To learn how to do this, you can reference the
-`checkDuplicateTrashEntry` method from
+entries. If an entry with the same name (or any other specific field) is 
+detected in a directory, it must throw an exception. To learn how to do this, 
+you can reference the `checkDuplicateTrashEntry` method from
 [`SongTrashHandler`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/trash/SongTrashHandler.java).
 Here's the code from that method:
 

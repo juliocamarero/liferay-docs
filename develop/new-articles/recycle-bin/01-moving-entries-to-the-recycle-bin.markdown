@@ -32,8 +32,8 @@ You'll implement trash handlers for these entities next.
 ## Step 2: Implement a Trash Handler for Each Trash-Enabled Entity [](id=step-2-implement-a-trash-handler-for-each-trash-enabled-entity)
 
 As with many other Liferay frameworks--such as the workflow, assets, and
-indexing frameworks--you must implement a handler class for Recycle Bin. A
-Recycle Bin handler class manages moving entries to the Recycle Bin, viewing
+indexing frameworks--you must implement a handler Component for Recycle Bin. A
+Recycle Bin handler Component class manages moving entries to the Recycle Bin, viewing
 them in the Recycle Bin, restoring them, and permanently deleting them. You must
 implement the [`TrashHandler`](http://docs.liferay.com/portal/6.2/javadocs/com/liferay/portal/kernel/trash/TrashHandler.html)
 interface for each trash-enabled entity. As a convenience, Liferay provides the
@@ -56,20 +56,25 @@ song and album entities. As an example trash handler implementation, you
 can refer to the [`SongTrashHandler`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/trash/SongTrashHandler.java)
 and its base class [`JukeBoxBaseTrashHandler`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/trash/JukeBoxBaseTrashHandler.java).
 
-After you've implemented trash handlers for your trash-enabled entities, 
-specify the handlers in your app's `liferay-portlet.xml` file. For example, the
-Jukebox's Song portlet specifies the song trash handler like this:
+The Component annotation will tie your handler to an specific type of entity
+setting the property model.class.name as the class name of the trash-enabled 
+entity. For example:
+   
+     @Component(
+     	property = {"model.class.name=com.liferay.journal.model.JournalArticle"},
+     	service = TrashHandler.class
+     )
+   
 
-    <trash-handler>org.liferay.jukebox.trash.SongTrashHandler</trash-handler>
-
-You can refer to the Jukebox portlet's [`liferay-portlet.xml`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/liferay-portlet.xml)
-file to see the trash handlers it specifies. 
+You can refer to the Journal Article Trash handler [`JournalArticleTrashHandler`](https://github.com/liferay/liferay-portal/blob/master/modules/apps/web-experience/journal/journal-service/src/main/java/com/liferay/journal/trash/JournalArticleTrashHandler.java)
+file to see a more complex example of a trash handler. 
 
 +$$$
 
-**Note:** A trash handler refers to an entity, not a portlet. A trash handler
-can, therefore, be declared in any of a plugin's portlets. A best practice is to
-declare them in the app's principal portlet.
+**Note:** A trash handler refers to an entity, not a portlet because entities 
+that support the recycle bin should support it independently of the portlet used
+to interact with them. A trash handler must, therefore, make reference to a 
+class name of an entity, not to a portlet in particular.
 
 $$$
 
@@ -245,9 +250,10 @@ trash-enabled entities.
 
 ## Step 5: Implement a Trash Renderer for Each Trash-Enabled Entity [](id=step-5-implement-a-trash-renderer-for-each-trash-enabled-entity)
 
-In a similar way to creating a trash handler, you create a class to render trash
-entries in the Recycle Bin. If you're already using an asset renderer, you can
-reuse it, as long as it also implements the
+In a similar way to creating a trash handler for handling recicle bin operation 
+with your entity, you need to create a class to specify how to render your 
+entities in the Recycle Bin. If you're already using an asset renderer to render
+your entities, you can reuse it, as long as it also implements the
 [`TrashRenderer`](https://docs.liferay.com/portal/6.2/javadocs/com/liferay/portal/kernel/trash/TrashHandler.html)
 interface.
 
@@ -255,11 +261,13 @@ As an example of a combined asset renderer and trash renderer implementation,
 consider the Jukebox portlet's [`SongAssetRenderer`](https://github.com/liferay-labs/jukebox-portlet/blob/6.2.x/docroot/WEB-INF/src/org/liferay/jukebox/asset/SongAssetRenderer.java)
 class.
 
-If you don't already have an asset renderer, you must create a trash renderer.
-In it, implement a `getTrashRenderer` method to instantiate and return a trash
-renderer based on the trash entry's primary key. For an example of accessing
-the trash renderer from a trash handler, consider the `getTrashRenderer` method
-from the Document Library class [`DLFileShortcutTrashHandler`](https://github.com/liferay/liferay-portal/blob/6.2.x/portal-impl/src/com/liferay/portlet/documentlibrary/trash/DLFileShortcutTrashHandler.java):
+If you don't already have an asset renderer or you want your entities to be 
+displayed in a specific way in the recycle bin, you must create a trash
+renderer.
+In your trash handler component, implement the `getTrashRenderer` method to 
+instantiate and return a trash renderer based on the trash entry's primary key.
+For an example of accessing the trash renderer from a trash handler, consider
+the `getTrashRenderer` method from the Document Library class [`DLFileShortcutTrashHandler`](https://github.com/liferay/liferay-portal/blob/master/modules/apps/collaboration/document-library/document-library-service/src/main/java/com/liferay/document/library/trash/DLFileShortcutTrashHandler.java):
 
     @Override
     public TrashRenderer getTrashRenderer(long classPK)
